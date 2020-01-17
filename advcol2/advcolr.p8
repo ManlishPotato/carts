@@ -44,15 +44,15 @@ end
 
 function draw_i()
 	if(p1.r==1) then
-		local x=0
-		local y=0
+		local x=-14
+		local y=-3
 			for i=0,3,1 do
 				drawcube(p1.x+x,p1.y+y)
 				x+=7
 			end
 	else
-		local x=0
-		local y=0
+		local x=-4
+		local y=-14
 			for i=0,3,1 do
 				drawcube(p1.x+x,p1.y+y)
 				y+=7
