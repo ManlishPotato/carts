@@ -6,32 +6,62 @@ function _init()
 	
 	p1.x=50
 	p1.y=70
-	p1.r=1	
+	p1.r=1
+	p1.tet=1	
 	
 	p1.lastx=0
 	p1.lasty=0
+	
+	tet_spr=33
 end
 
 function _update()
 	cls()
 	map(0,0,0,0,16,16)
-	spr(33,p1.x,p1.y,3,1)
-	
+
 	move()
-	drawrspr()
+	drawspr()
+	pset(p1.x,p1.y,12)
 end
 
 function move()
-	if(btnp(0)) then p1.r-=1 end
-	if(btnp(1)) then p1.r+=1 end
+	if(btnp(4)) then p1.r-=1 end
+	if(btnp(5)) then p1.r+=1 end
 
-	if(p1.r>4) then p1.r=1 end
-	if(p1.r<1) then p1.r=4 end
-	
+	if(p1.r>2) then p1.r=1 end
+	if(p1.r<1) then p1.r=2 end
 	print(p1.r)
+	
+	if(btn(0)) then p1.x-=1 end
+	if(btn(1)) then p1.x+=1 end
+	if(btn(2)) then p1.y-=1 end
+	if(btn(3)) then p1.y+=1 end
 end
 
-function drawrspr()
+function drawspr()
+	if(p1.tet==1) then draw_i() end --draw i tetramino
+end
+
+function draw_i()
+	if(p1.r==1) then
+		local x=0
+		local y=0
+			for i=0,3,1 do
+				drawcube(p1.x+x,p1.y+y)
+				x+=7
+			end
+	else
+		local x=0
+		local y=0
+			for i=0,3,1 do
+				drawcube(p1.x+x,p1.y+y)
+				y+=7
+			end
+	end
+end
+
+function drawcube(xcord,ycord)
+	spr(tet_spr,xcord,ycord)
 end
 __gfx__
 00000000111111118888888888888888888888888888888888888888888888880000000000000000000000000000000000000000000000000000000000000000
