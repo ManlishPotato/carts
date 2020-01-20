@@ -27,9 +27,7 @@ function move()
 end
 
 function collision()
-	for p=0,15,1 do
-		if(mget(p,0)==1) then
-	end
+	
 end
 
 function draw()
