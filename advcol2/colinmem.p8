@@ -7,12 +7,13 @@ p1.y=0
 
 p1.spr=2
 p1.r=0
+p1.sel=2
 
-tet_i={52,56, -5,0,4} --1
-tet_t={50,50, -8 ,0,3, 0,8,1} --2
+tet_i={56,56, -8,0,4} --1
+tet_t={56,56, -8,0,3, 0,8,1} --2
 
 function _init()
-	table=tet_i --Set start tetramino
+	table=tet_t --Set start tetramino
 	p1.x,p1.y=table[1],table[2] --Set start pos
 end
 
@@ -21,10 +22,14 @@ function _update()
 	map(0,0,0,0,16,16)
 
 	move()
-	pset(p1.x,p1.y,4)
 	drawspr()
 
-	print(p1.r,nil,nil,1)
+	pset(p1.x,p1.y,0)
+
+	print(p1.x,10,10,12)
+	print(p1.y,20,10,12)
+
+	print(p1.r,nil,nil,8)
 end
 
 function move()
@@ -33,9 +38,17 @@ function move()
 	if(btnp(2)) then p1.y-=8 end
 	if(btnp(3)) then p1.y+=8 end
 
+	--rotation buttonMap
 	if(btnp(4)) then p1.r+=90 end
-
 	if(p1.r>270) then p1.r=0 end
+
+	--selection buttonMap
+	if(btnp(5)) then p1.sel+=1 end
+	if(p1.sel>2) then p1.sel=1 end
+
+	--Mapping tetraminoes to p1 selection
+	if(p1.sel==1) then table=tet_i end
+	if(p1.sel==2) then table=tet_t end
 end
 
 function drawspr()
