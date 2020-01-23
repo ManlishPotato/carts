@@ -23,8 +23,9 @@ function _update()
 
 	move()
 	drawspr()
+	collision()
 
-	pset(p1.x,p1.y,0)
+	--pset(p1.x,p1.y,0)
 
 	print(p1.x,10,10,12)
 	print(p1.y,20,10,12)
@@ -38,17 +39,54 @@ function move()
 	if(btnp(2)) then p1.y-=8 end
 	if(btnp(3)) then p1.y+=8 end
 
-	--rotation buttonMap
+	--rotation buttonmap
 	if(btnp(4)) then p1.r+=90 end
 	if(p1.r>270) then p1.r=0 end
 
-	--selection buttonMap
+	--selection buttonmap
 	if(btnp(5)) then p1.sel+=1 end
 	if(p1.sel>2) then p1.sel=1 end
 
-	--Mapping tetraminoes to p1 selection
+	--mapping tetraminoes to p1 selection
 	if(p1.sel==1) then table=tet_i end
 	if(p1.sel==2) then table=tet_t end
+end
+
+function collision()
+	local pos_x=0
+	local pos_y=0
+	local rot_x=0
+ local rot_y=0
+
+ for i=1,table[5],1 do
+
+ 	rot_x,rot_y=rot(table[3]+pos_x,table[4]+pos_y)
+ 	
+ 	for k=0,7,7 do
+ 		for l=0,7,7 do
+ 			pset(p1.x+rot_x+l,p1.y+rot_y+k,7)
+ 		end
+ 	end
+ 	
+ 	pos_x+=8
+ end
+
+ if(table[6]!=nil) then
+ 	pos_x=0
+ 	pos_y=0
+
+		for n=1,table[8],1 do
+			rot_x,rot_y=rot(table[6]+pos_x,table[7]+pos_y)
+
+		for v=0,7,7 do
+ 		for b=0,7,7 do
+ 			pset(p1.x+rot_x+b,p1.y+rot_y+v,7)
+ 		end
+ 	end
+			
+			pos_x+=8
+		end
+ end	
 end
 
 function drawspr()
