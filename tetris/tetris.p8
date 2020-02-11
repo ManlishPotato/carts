@@ -1,4 +1,4 @@
-pico-8 cartridge // http://www.pico-8.com
+delay1pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 p1={}
@@ -13,8 +13,13 @@ p1.lastr=0
 p1.sel=0
 p1.grav=0.25
 
+time_last=0
+time_active=false
+doonce=true
+
 debug_b=0
 debug_a=0
+debug_bool=false
 debug_table={}
 
 start_y=-10
@@ -38,18 +43,68 @@ function _update60()
 	cls()
 	map(0,0,0,0,16,16)
 
-	game_logic()
+	if(game_logic() or time_active==true) then
+		time_keeper("start")
+		if(timer(0.4)) then clear_block() end
+		if(timer(0.6)) then time_keeper("end") drag_block() end
+	end
 
-	move()
-	collision("move")
-	rotate()
-	collision("rot")
+	if(time_active==false) then
+		move()
+		collision("move")
+		rotate()
+		collision("rot")
 
-	gravity()
-	collision("gravity")
+		gravity()
+		collision("gravity")
 
-	draw_tet()
-	map(0,0,0,0,16,16)
+		draw_tet()
+		map(0,0,0,0,16,16)
+	end
+end
+
+function time_keeper(op)
+	if(op=="start") then
+		time_active=true
+		if(doonce) then time_last=time() doonce=false end
+	end
+
+	if(op=="end") then
+		doonce=true
+		time_active=false
+	end
+end
+
+function timer(delay)
+	if(time()-time_last>delay) then return true end
+end
+
+function drag_block()
+	local pos_x=24
+	local pos_y=128
+	local done=true
+
+	for i=1,16,1 do
+		pos_x=24
+		pos_y-=8
+		local count=0
+		local countab=0
+		for n=1,10,1 do
+			if(mget(pos_x/8,pos_y/8)==0) then count+=1 end
+			if(mget(pos_x/8,(pos_y-8)/8)!=0) then countab+=1 end
+			pos_x+=8
+		end
+		if(count==10 and countab>=1) then
+			pos_x=24
+			done=false
+			for v=1,10,1 do
+				mset(pos_x/8,pos_y/8,mget(pos_x/8,(pos_y-8)/8))
+				mset(pos_x/8,(pos_y-8)/8,0)
+				pos_x+=8
+			end
+		end
+	end
+	if(done==false) then drag_block() end
 end
 
 function grav_block()
@@ -109,7 +164,7 @@ function game_logic()
 		pos_x=24
 		pos_y+=8
 	end
-	if(del_mode) then clear_block() grav_block() end
+	if(del_mode) then return true	end
 end
 
 function mapset()
