@@ -10,8 +10,9 @@ p1.lasty=10
 p1.spr=19
 p1.r=0
 p1.lastr=0
-p1.sel=0
+p1.sel=1
 p1.grav=0.25
+table={}
 
 ti={}
 ti.last=0
@@ -34,13 +35,25 @@ sc.doonce=true
 
 ne={}
 ne.next=0
-ne.td=false
-ne.cycles=5 --Gravdel
+ne.td=false --depricated
+ne.cycles=2 --Gravdel
 
-debug_b=0
-debug_a=0
-debug_bool=false
-debug_table={}
+d={}
+d.a=0
+d.b=0
+d.bool=false
+d.table={}
+
+u={}
+u.move=true
+u.grav=true
+u.rot=true
+
+t={}
+t.active=false
+t.cyclesd=10
+t.cycles=t.cyclesd
+
 
 start_y=-10
 -- start pos | row1 | row2
@@ -62,247 +75,41 @@ function _update60()
 	cls()
 	map(0,0,0,0,16,16)
 
-	if(level_check() or gameover) then game_over() end
-
-	if(void_check() or ti.active and gameover!=true) then
-		time_keeper("start")
-		if(timer(0.7)) then clear_block() fx.state=false fx.doonce=true sc.stack=0 end
-		if(timer(0.8)) then time_keeper("end") drag_block() sfx(5) end
-	end
-
-	effect()
-	score()
-	next_tet()
-
-	if(ti.active==false and gameover==false) then
+	if(u.move) then
 		move()
 		collision("move")
-		rotate()
+		if(u.rot)then rotate() end
 		collision("rot")
-
-		gravity()
-		collision("gravity")
-		next_tet("new_t")
-
-		draw_tet()
-		map(0,0,0,0,16,16)
 	end
+
+	if(u.grav) then
+		gravity()
+		if(collision("gravity")) then t.active=true end
+	end
+
+	tuck()
+	next_tet()
+
+	draw_tet()
+
+	debug()
+	map(0,0,0,0,16,16)
 end
 
 function next_tet(op)
+	local temp=0
 	if(op=="init") then
-		ne.next=flr(rnd(7)+1)
+		ne.next=4	--rand
 	end
 
 	if(op=="new") then
-		p1.sel=ne.next
-		ne.next=flr(rnd(7)+1)
-	end
-
-	if(op=="new_t") then
-		if(ne.td) then
-			if(ne.cycles<=0) then
-				ne.td=false
-				ne.cycles=5
-				sfx(0)
-				mapset()
-				init_tet()
-			else ne.cycles-=1 end
-		end
+		ne.next=4 --rand
+		temp=ne.next
+		return temp
 	end
 	rectfill(104,40,119,55,1)
 	rect(104,40,119,55,7)
 	spr((ne.next*2)+62,104,40,2,2)
-end
-
-function score()
-	if(sc.doonce) then sc.doonce=false
-		if(sc.stack==1) then sc.scorep+=100 end
-		if(sc.stack==2) then sc.scorep+=200 end
-		if(sc.stack==3) then sc.scorep+=300 end
-		if(sc.stack==4) then sc.scorep+=1000 end
-	end
-	if(sc.stack==0) then sc.doonce=true end
-
-	rectfill(0,40,23,55,1)
-	rect(0,40,23,55,7)
-	rectfill(1,44,22,50,0)
-	print(sc.scorep,2,45,8)
-end
-
-function effect()
-	local pos_x=24
-	local gain=0.5
-	local range={}
-
-	if(sc.stack==1) then range={0.1,0.5,0.1} end
-	if(sc.stack==2) then range={0.1,0.5,0.1} end
-	if(sc.stack==3) then range={0.1,0.5,0.1} end
-	if(sc.stack==4) then range={0.1,0.5,0.1} end
-
-	if(sc.stack==0) then range={0.1,0.5,0.1} end
-
-	if(fx.state) then
-		if(fx.table[1]==nil or fx.cycles<=0 or fx.doonce) then
-			fx.doonce=false
-			fx.cycles=10
-			for i=0,27,3 do
-				fx.table[1+i]=rnd(80)+pos_x
-				fx.table[2+i]=rnd((fx.pos+(sc.stack*8))-fx.pos)+fx.pos
-				fx.table[3+i]=range[1]+rnd(range[2])+range[3]
-			end
-		end
-		if(fx.cycles>0) then
-			for i=0,27,3 do
-				fx.table[3+i]+=gain
-				circfill(fx.table[1+i],fx.table[2+i],fx.table[3+i],rnd(2)+5)
-			end
-			fx.cycles-=1
-		end
-	end
-end
-
-function game_over()
-	gameover=true
-
-	local pos_x=24
-	local pos_y=0
-	for i=1,16,1 do
-		for n=1,10,1 do
-			mset(pos_x/8,pos_y/8,0)
-			pos_x+=8
-		end
-		pos_x=24
-		pos_y+=8
-	end
-
-	print("game over",46,50,8)
-	print("-----------",42,56,7)
-	print("⬆️ to continue",36,62,8)
-
-	if(btnp(2)) then init_tet() gameover=false sc.scorep=0  end
-end
-
-function level_check()
-	local pos_x=24
-	local pos_y=0
-	local count=0
-	for i=1,16,1 do
-		for n=1,10,1 do
-			if(fget(mget(pos_x/8,pos_y/8),0)) then count+=1 break end
-			pos_x+=8
-		end
-		pos_x=24
-		pos_y+=8
-	end
-	if(count==16) then return true end
-end
-
-function time_keeper(op)
-	if(op=="start") then
-		ti.active=true
-		if(ti.doonce) then ti.last=time() ti.doonce=false sfx(2) end
-	end
-
-	if(op=="end") then
-		ti.doonce=true
-		ti.active=false
-	end
-end
-
-function timer(delay)
-	if(time()-ti.last>delay) then return true end
-end
-
-function drag_block()
-	local pos_x=24
-	local pos_y=128
-	local done=true
-
-	for i=1,16,1 do
-		pos_x=24
-		pos_y-=8
-		local count=0
-		local countab=0
-		for n=1,10,1 do
-			if(mget(pos_x/8,pos_y/8)==0) then count+=1 end
-			if(mget(pos_x/8,(pos_y-8)/8)!=0) then countab+=1 end
-			pos_x+=8
-		end
-		if(count==10 and countab>=1) then
-			pos_x=24
-			done=false
-			for v=1,10,1 do
-				mset(pos_x/8,pos_y/8,mget(pos_x/8,(pos_y-8)/8))
-				mset(pos_x/8,(pos_y-8)/8,0)
-				pos_x+=8
-			end
-		end
-	end
-	if(done==false) then drag_block() end
-end
-
-function grav_block()
-	local pos_x=24
-	local pos_y=128
-	local done=true
-
-	for i=1,16,1 do
-		pos_x=24
-		pos_y-=8
-		for n=1,10,1 do
-			if(fget(mget(pos_x/8,pos_y/8),0)==true) then
-				if(fget(mget(pos_x/8,(pos_y+8)/8),0)==false) then
-					mset(pos_x/8,(pos_y+8)/8,mget(pos_x/8,pos_y/8))
-					mset(pos_x/8,pos_y/8,0)
-					done=false
-				end
-			end
-			pos_x+=8
-		end
-	end
-	if(done==false) then grav_block() end
-end
-
-function clear_block()
-	local  pos_x=24
-	local  pos_y=0
-	local count=0
-	for i=1,16,1 do
-		for n=1,10,1 do
-			if(fget(mget(pos_x/8,pos_y/8),1)) then count+=1 end
-			pos_x+=8
-		end
-		if(count==10) then pos_x=24 for v=1,10,1 do mset(pos_x/8,pos_y/8,0) pos_x+=8 end end
-		count=0
-		pos_x=24
-		pos_y+=8
-	end
-end
-
-function void_check()
-	local pos_x=24
-	local pos_y=0
-	local count=0
-	local del_mode=false
-	local doonce=true
-	for i=1,16,1 do
-		for n=1,10,1 do
-			if(fget(mget(pos_x/8,pos_y/8),0)) then count+=1 end
-			pos_x+=8
-		end
-		if(count==10) then
-			pos_x=24
-			del_mode=true
-			if(doonce) then fx.pos=pos_y fx.state=true doonce=false end
-			sc.stack+=1
-			for v=1,10,1 do mset(pos_x/8,pos_y/8,(mget(pos_x/8,pos_y/8))+20) pos_x+=8 end
-		end
-		count=0
-		pos_x=24
-		pos_y+=8
-	end
-	if(del_mode) then return true	end
 end
 
 function mapset()
@@ -329,27 +136,47 @@ function mapset()
 	end
 end
 
-function init_tet()
-	next_tet("new")
-	p1.r=0
+function tuck()
+	if(t.active) then
+		p1.y=8*(flr((p1.y/8)+0.5))
+		p1.lasty=p1.y
+		u.grav=false
+		u.rot=false
+		p1.y+=8
+		if(collision("gravity")!=true) then
+			t.cycles=t.cyclesd
+			u.grav=true
+			u.rot=true
+			t.cycles=t.cyclesd+1
+			p1.y-=8
+			d.b=1
+			t.active=false
+		end
+		if(t.cycles<=0) then
+			mapset()
+			t.active=false
+			t.cycles=t.cyclesd
+			u.grav=true
+			u.rot=true
+			init_tet()
+		else t.cycles-=1 end
+	end
+end
 
-	if(p1.sel==1) then table=tet_i p1.spr=18 end
-	if(p1.sel==2) then table=tet_t p1.spr=19 end
-	if(p1.sel==3) then table=tet_o p1.spr=20 end
-	if(p1.sel==4) then table=tet_s p1.spr=21 end
-	if(p1.sel==5) then table=tet_z p1.spr=22 end
-	if(p1.sel==6) then table=tet_l p1.spr=23 end
-	if(p1.sel==7) then table=tet_j p1.spr=24 end
+function debug()
+	rectfill(70,0,100,16,8)
 
-	p1.x,p1.y=table[1],table[2]
+	print("a: "..d.a,72,2,7)
+	print("b: "..d.b,72,10,7)
 end
 
 function gravity()
-	p1.lastx,p1.lasty=p1.x,p1.y
+	p1.lasty=p1.y
 	if(btn(3)) then p1.y+=p1.grav+4 else p1.y+=p1.grav end
 end
 
 function move()
+	p1.lastx=p1.x
 	if(btnp(0)) then p1.x-=8 end
 	if(btnp(1)) then p1.x+=8 end
 end
@@ -361,6 +188,22 @@ function rotate()
 	if(btnp(5)) then p1.r+=90 end
 	if(p1.r>270) then p1.r=0 end
 	if(p1.r<0) then p1.r=270 end
+end
+
+function init_tet()
+	d.a=p1.y
+
+	p1.r=0
+	p1.sel=next_tet("new") --rand
+	if(p1.sel==1) then table=tet_i p1.spr=18 end
+	if(p1.sel==2) then table=tet_t p1.spr=19 end
+	if(p1.sel==3) then table=tet_o p1.spr=20 end
+	if(p1.sel==4) then table=tet_s p1.spr=21 end
+	if(p1.sel==5) then table=tet_z p1.spr=22 end
+	if(p1.sel==6) then table=tet_l p1.spr=23 end
+	if(p1.sel==7) then table=tet_j p1.spr=24 end
+
+	p1.x,p1.y=table[1],table[2]
 end
 
 function collision(op)
@@ -377,8 +220,7 @@ function collision(op)
 					flag=fget(mget((p1.x+rot_x+l)/8,(p1.y+rot_y+k)/8),0)
 	 			if(flag) then
 						p1.y=p1.lasty
-						ne.td=true --token1
-						goto continue_init
+						return true
 	 			end
 				end
 				if(op=="move") then
@@ -408,8 +250,7 @@ function collision(op)
 						flag=fget(mget((p1.x+rot_x+b)/8,(p1.y+rot_y+v)/8),0)
 		 			if(flag) then
 							p1.y=p1.lasty
-							ne.td=true --token2
-							goto continue_init
+							return true
 		 			end
 					end
 					if(op=="move") then
@@ -429,7 +270,6 @@ function collision(op)
 		pos_x+=8
 	 end
  end
-	::continue_init::
 end
 
 function draw_tet()
@@ -479,7 +319,7 @@ __gfx__
 00077000616661167777777700000000777777770008880000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00700700611116667777777700000000777777778880000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000116611117777777700000000777777770000008800000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000111661667777777700000000777777770000080000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000111661667777777700000000777777770000080077777777000000000000000000000000000000000000000000000000000000000000000000000000
 000000001666116666ee888877666bbbfffffaaa77776ccc77766444777ddd227777666600000000000000000000000000000000000000000000000000000000
 00000000116111116ee88888766bbbbbffaaaaaa776ccccc7754444477dd22227766666600000000000000000000000000000000000000000000000000000000
 0000000061111161eee8888866bbbbbbfaaaaaaa76cccccc754444447dd222227666666600000000000000000000000000000000000000000000000000000000
