@@ -54,6 +54,11 @@ t.active=false
 t.cyclesd=10
 t.cycles=t.cyclesd
 
+f={}
+f.active=false
+f.cyclesd=10
+f.cycles=f.cyclesd
+
 start_y=-10
 -- start pos | row1 | row2
 --tab={px,py, cx,cy,n, cx,cy,n}
@@ -93,6 +98,7 @@ function _update60()
 			if(collision("gravity")) then t.active=true end
 		end
 		tuck()
+		tet_effect()
 	end
 
 	if(void_check() or ti.active and gameover!=true) then
@@ -104,6 +110,12 @@ function _update60()
 	if(ti.active==false and gameover==false) then
 		draw_tet()
 		map(0,0,0,0,16,16)
+	end
+end
+
+function tet_effect()
+	if(false) then
+		p1.spr=2
 	end
 end
 
@@ -339,6 +351,7 @@ end
 
 function tuck()
 	if(t.active) then
+		f.active=true
 		p1.y=8*(flr((p1.y/8)+0.5))
 		p1.lasty=p1.y
 		u.grav=false
@@ -346,6 +359,7 @@ function tuck()
 		p1.y+=8
 		if(collision("gravity")!=true) then
 			t.cycles=t.cyclesd
+			f.active=false
 			u.grav=true
 			u.rot=true
 			t.cycles=t.cyclesd+1
@@ -354,6 +368,7 @@ function tuck()
 			t.active=false
 		end
 		if(t.cycles<=0) then
+			f.active=false
 			mapset()
 			t.active=false
 			t.cycles=t.cyclesd
