@@ -48,21 +48,27 @@ u={}
 u.move=true
 u.grav=true
 u.rot=true
+u.vcheck=true
 
 t={}
 t.active=false
 t.cyclesd=10
 t.cycles=t.cyclesd
 
-f={}
-f.active=false
-f.cyclesd=10
-f.cycles=f.cyclesd
+m={}
+m.active=false
+m.cyclesd=10
+m.cycles=m.cyclesd
+m.lastspr=0
+m.lastx=0
+m.lasty=0
+m.lasttable={}
+m.lastr=0
 
-start_y=-10
+start_y=-15
 -- start pos | row1 | row2
 --tab={px,py, cx,cy,n, cx,cy,n}
-tet_i={56,start_y, -8,0,4} --1
+tet_i={56,-10, -8,0,4} --1
 tet_t={56,start_y, -8,0,3, 0,8,1} --2
 tet_o={56,start_y, -8,0,2, -8,8,2} --3
 tet_s={56,start_y, -8,0,2, -16,8,2} --4
@@ -89,7 +95,7 @@ function _update60()
 		if(u.move) then
 			move()
 			collision("move")
-			if(u.rot)then rotate() end
+			if(u.rot) then rotate() end
 			collision("rot")
 		end
 
@@ -98,13 +104,15 @@ function _update60()
 			if(collision("gravity")) then t.active=true end
 		end
 		tuck()
-		tet_effect()
+		map_effect()
 	end
 
-	if(void_check() or ti.active and gameover!=true) then
-		time_keeper("start")
-		if(timer(0.7)) then clear_block() fx.state=false fx.doonce=true sc.stack=0 end
-		if(timer(0.8)) then time_keeper("end") drag_block() sfx(5) end
+	if(u.vcheck) then
+		if(void_check() or ti.active and gameover!=true) then
+			time_keeper("start")
+			if(timer(0.7)) then clear_block() fx.state=false fx.doonce=true sc.stack=0 end
+			if(timer(0.8)) then time_keeper("end") drag_block() sfx(5) end
+		end
 	end
 
 	if(ti.active==false and gameover==false) then
@@ -113,9 +121,31 @@ function _update60()
 	end
 end
 
-function tet_effect()
-	if(false) then
-		p1.spr=2
+function map_effect(op)
+	if(op=="start") then
+		m.active=true
+		m.lastx=p1.x
+		m.lasty=p1.y
+		m.lastspr=p1.spr
+		m.lasttable=table
+		m.lastr=p1.r
+		mapset(2,m.lastx,m.lasty,m.lasttable,m.lastr)
+
+		u.move=false
+		u.grav=false
+		u.vcheck=false
+	end
+
+	if(m.active) then
+		if(m.cycles<=0) then
+			mapset(m.lastspr,m.lastx,m.lasty,m.lasttable,m.lastr)
+			m.cycles=m.cyclesd
+			m.active=false
+
+			u.move=true
+			u.grav=true
+			u.vcheck=true
+		else m.cycles-=1 end
 	end
 end
 
@@ -325,25 +355,25 @@ function next_tet(op)
 	spr((ne.next*2)+62,104,40,2,2)
 end
 
-function mapset()
+function mapset(sprite,x,y,tab,lrot)
 	local pos_x=0
 	local pos_y=0
 	local rot_x=0
  local rot_y=0
 
- for i=1,table[5],1 do
- 	rot_x,rot_y=rot(table[3]+pos_x,table[4]+pos_y)
-		mset((p1.x+rot_x)/8,flr(((p1.y+rot_y)/8)+0.5),p1.spr)
+ for i=1,tab[5],1 do
+ 	rot_x,rot_y=rot(tab[3]+pos_x,tab[4]+pos_y,lrot)
+		mset((x+rot_x)/8,flr(((y+rot_y)/8)+0.5),sprite)
  	pos_x+=8
  end
 
- if(table[6]!=nil) then
+ if(tab[6]!=nil) then
  	pos_x=0
  	pos_y=0
 
-		for n=1,table[8],1 do
-			rot_x,rot_y=rot(table[6]+pos_x,table[7]+pos_y)
-			mset((p1.x+rot_x)/8,flr(((p1.y+rot_y)/8)+0.5),p1.spr)
+		for n=1,tab[8],1 do
+			rot_x,rot_y=rot(tab[6]+pos_x,tab[7]+pos_y,lrot)
+			mset((x+rot_x)/8,flr(((y+rot_y)/8)+0.5),sprite)
 			pos_x+=8
 		end
 	end
@@ -351,7 +381,6 @@ end
 
 function tuck()
 	if(t.active) then
-		f.active=true
 		p1.y=8*(flr((p1.y/8)+0.5))
 		p1.lasty=p1.y
 		u.grav=false
@@ -359,7 +388,6 @@ function tuck()
 		p1.y+=8
 		if(collision("gravity")!=true) then
 			t.cycles=t.cyclesd
-			f.active=false
 			u.grav=true
 			u.rot=true
 			t.cycles=t.cyclesd+1
@@ -368,11 +396,9 @@ function tuck()
 			t.active=false
 		end
 		if(t.cycles<=0) then
-			f.active=false
-			mapset()
+			map_effect("start")
 			t.active=false
 			t.cycles=t.cyclesd
-			u.grav=true
 			u.rot=true
 			init_tet()
 		else t.cycles-=1 end
@@ -509,20 +535,21 @@ function draw_tet()
  end
 end
 
-function rot(val_x,val_y)
- if(p1.r==0) then
+function rot(val_x,val_y,lrot)
+	if(lrot==nil) then lrot=p1.r end
+ if(lrot==0) then
  	return val_x,val_y
 	end
 
-	if(p1.r==90) then
+	if(lrot==90) then
 	 return (val_y)*-1,val_x
 	end
 
-	if(p1.r==180) then
+	if(lrot==180) then
 		return (val_x)*-1,(val_y)*-1
 	end
 
-	if(p1.r==270) then
+	if(lrot==270) then
 	 return val_y,(val_x)*-1
 	end
 end
