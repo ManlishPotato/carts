@@ -121,24 +121,25 @@ function _update60()
 	if(ti.active==false and gameover==false) then
 		draw_tet()
 		map(0,0,0,0,16,16)
-		
+
 		flow()
 		white_out()
 	end
 end
 
 function flow()
-	if(btnp(4)) then 
-		w.active=true
-	else w.active=false end
+	if(btnp(5)) then
+		if(w.active) then w.active=false
+		elseif(w.active==false) then w.active=true end
+	end
 end
 
 function white_out()
 	if(w.active) then
 		local pos_x=24
 		local pos_y=0
-		
-		for i=1,16,1 do 
+
+		for i=1,16,1 do
 			for n=1,10,1 do
 				if(fget(mget(pos_x/8,pos_y/8),0)) then
 					rectfill(pos_x,pos_y,pos_x+7,pos_y+7,7)
@@ -457,7 +458,7 @@ function rotate()
 	p1.lastr=p1.r
 
 	if(btnp(4)) then p1.r-=90 end
-	if(btnp(5)) then p1.r+=90 end
+	--if(btnp(5)) then p1.r+=90 end
 	if(p1.r>270) then p1.r=0 end
 	if(p1.r<0) then p1.r=270 end
 end
