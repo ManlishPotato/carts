@@ -1,6 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
+--Player 1
 p1={}
 p1.x=0
 p1.y=0
@@ -14,6 +15,7 @@ p1.sel=1
 p1.grav=0.25
 table={}
 
+--Timer
 ti={}
 ti.last=0
 ti.active=false
@@ -21,6 +23,7 @@ ti.doonce=true
 
 gameover=false
 
+--Effects
 fx={}
 fx.cycles=10
 fx.table={}
@@ -28,33 +31,39 @@ fx.state=false
 fx.pos=0 --effect y pos
 fx.doonce=true
 
+--Score
 sc={}
 sc.stack=0 --score stack 1-4
 sc.scorep=0
 sc.doonce=true
 
+--Next tetris
 ne={}
 ne.next=0
 ne.td=false --depricated
 ne.cycles=2 --Gravdel
 
+--Debug
 d={}
 d.a=0
 d.b=0
 d.bool=false
 d.table={}
 
+--Update
 u={}
 u.move=true
 u.grav=true
 u.rot=true
 u.vcheck=true
 
+--Tuck
 t={}
 t.active=false
 t.cyclesd=10
 t.cycles=t.cyclesd
 
+--Mapset / MapEffect
 m={}
 m.active=false
 m.cyclesd=10
@@ -65,11 +74,20 @@ m.lasty=0
 m.lasttable={}
 m.lastr=0
 
+--WhiteOut
 w={}
 w.active=false
 
+--Flow
 f={}
 f.per=0
+
+--Tetris Banner
+tb={}
+tb.active=false
+tb.cyclesd=60
+tb.cycles=tb.cyclesd
+tb.doonce=true
 
 start_y=-15
 -- start pos | row1 | row2
@@ -116,6 +134,7 @@ function _update60()
 	if(u.vcheck) then
 		if(void_check() or ti.active and gameover!=true) then
 			time_keeper("start")
+			tetris_banner()
 			if(timer(0.7)) then clear_block() fx.state=false fx.doonce=true sc.stack=0 end
 			if(timer(0.8)) then time_keeper("end") drag_block() sfx(5) end
 		end
@@ -128,6 +147,18 @@ function _update60()
 		flow()
 		white_out()
 		flow_meter()
+	end
+end
+
+function tetris_banner()
+	if(tb.doonce) then tb.doonce=false tb.active=true end
+	if(tb.active) then
+		print("tetris!",50,50,8)
+		if(tb.cycles<=0) then
+			tb.active=false
+			tb.doonce=true
+			tb.cycles=tb.cyclesd
+		else tb.cycles-=1 end
 	end
 end
 
@@ -177,6 +208,7 @@ function map_effect(op)
 
 	if(m.active) then
 		if(m.cycles<=0) then
+			sfx(0)
 			mapset(m.lastspr,m.lastx,m.lasty,m.lasttable,m.lastr)
 			m.cycles=m.cyclesd
 			m.active=false
