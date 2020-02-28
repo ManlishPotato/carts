@@ -6,9 +6,11 @@ c.dim=5
 c.limit=30
 
 c2={}
-c2.table={}
+c2.tbl={}
 c2.cycle=0
+c2.cycled=5
 c2.count=0
+c2.syzel=20
 
 d={}
 d.a=0
@@ -19,36 +21,52 @@ end
 
 function _update60()
 cls()
-if(btn(4)) then bcircle()	end
-if(btn(5)) then scircle() end
+if(btn(4)) then bcircle()	end --big circle + text
+if(btn(5)) then scircle() end remove() draw_state() --small circles
 
-draw_state()
 rect(10,10,110,110,7)
+
+--Circle count
+local count=0
+for i in all(c2.tbl) do count+=1 end d.a=count
+
+--Debug
+print("",nil,nil,8)
+print("debug a:"..d.a)
+print("debug b:"..d.b)
+end
+
+function remove()
+	local count=0
+
+	for i in all(c2.tbl) do count+=1 end
+	for e=3,count,3 do
+		if(c2.tbl[e]>=c2.syzel and c2.tbl[e]<200) then
+			for v=0,2,1 do
+				c2.tbl[e-v]=200
+			end
+		else c2.tbl[e]+=0.5 end
+	end
+	count=0
+	for b in all(c2.tbl) do if(b==200) then count+=1 end end
+	for k=1,count,1 do del(c2.tbl,200) end
 end
 
 function draw_state()
 	local count=0
-	local x=0
-	local y=0
-	local r=0
 
-	if(c2.table[1]==nil) then return end
-
-	for e in all(c2.table) do count+=1 end
-	for i=0,count-3,3 do
-		if(c2.table[i+1]==nil or c2.table[i+2]==nil or c2.table[i+3]==nil) then d.a=i end
-		circ(c2.table[i+1],c2.table[i+2],c2.table[i+3],8)
-		if(c2.table[i+3]>=10) then c2.table[i+3]=200
-		else c2.table[i+3]+=0.3 end
+	for i in all(c2.tbl) do count+=1 end
+	for v=3,count,3 do
+		circ(c2.tbl[v-2],c2.tbl[v-1],c2.tbl[v],8)
 	end
 end
 
 function scircle()
 	if(c2.cycle<=0) then --add object
-		c2.cycle=10
-		add(c2.table,flr(rnd(100)+10)) --1 x
-		add(c2.table,flr(rnd(100)+10)) --2 y
-		add(c2.table,2) --3 rad
+		c2.cycle=c2.cycled
+		add(c2.tbl,flr(rnd(100)+10)) --1 x
+		add(c2.tbl,flr(rnd(100)+10)) --2 y
+		add(c2.tbl,2) --3 rad
 	else c2.cycle-=1 end
 end
 
