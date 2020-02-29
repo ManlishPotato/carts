@@ -85,9 +85,21 @@ f.per=0
 --Tetris Banner
 tb={}
 tb.active=false
-tb.cyclesd=60
+tb.cyclesd=50
 tb.cycles=tb.cyclesd
 tb.doonce=true
+
+--Big Circle effect
+bc={}
+bc.dim=5
+bc.limit=30
+
+--Small Circle effect
+bc.tbl={}
+bc.cycle=0
+bc.cycled=5
+bc.count=0
+bc.syzel=20
 
 start_y=-15
 -- start pos | row1 | row2
@@ -110,10 +122,15 @@ function _update60()
 	map(0,0,0,0,16,16)
 
 	if(level_check() or gameover) then game_over() end
-
 	next_tet()
 	effect()
 	score()
+
+	flow()
+	white_out()
+	flow_meter()
+
+	map(0,0,0,0,16,16)
 
 	if(ti.active==false and gameover==false) then
 		if(u.move) then
@@ -134,7 +151,7 @@ function _update60()
 	if(u.vcheck) then
 		if(void_check() or ti.active and gameover!=true) then
 			time_keeper("start")
-			tetris_banner()
+			tb.active=true
 			if(timer(0.7)) then clear_block() fx.state=false fx.doonce=true sc.stack=0 end
 			if(timer(0.8)) then time_keeper("end") drag_block() sfx(5) end
 		end
@@ -143,21 +160,64 @@ function _update60()
 	if(ti.active==false and gameover==false) then
 		draw_tet()
 		map(0,0,0,0,16,16)
+	end
+	tetris_banner()
+end
 
-		flow()
-		white_out()
-		flow_meter()
+function bigcirc_effect()
+	circfill(64,64,bc.dim,0)
+	--line(0,64,128,64,7)
+	--line(64,0,64,128,7)
+	print("tETRIS!",52,62,8)
+	circ(64,64,bc.dim,7)
+	bc.dim+=0.5
+end
+
+function smallcirc_effect()
+	local count=0
+
+	if(bc.cycle<=0) then --add object
+		bc.cycle=bc.cycled
+		add(bc.tbl,flr(rnd(100)+10)) --1 x
+		add(bc.tbl,flr(rnd(100)+10)) --2 y
+		add(bc.tbl,2) --3 rad
+	else bc.cycle-=1 end
+
+	for i in all(bc.tbl) do count+=1 end
+	for e=3,count,3 do
+		if(bc.tbl[e]>=bc.syzel and bc.tbl[e]<200) then
+			for v=0,2,1 do
+				bc.tbl[e-v]=200
+			end
+		else bc.tbl[e]+=0.5 end
+	end
+	count=0
+	for b in all(bc.tbl) do if(b==200) then count+=1 end end
+	for k=1,count,1 do del(bc.tbl,200) end
+
+	count=0
+
+	for i in all(bc.tbl) do count+=1 end
+	for v=3,count,3 do
+		circ(bc.tbl[v-2],bc.tbl[v-1],bc.tbl[v],8)
 	end
 end
 
 function tetris_banner()
-	if(tb.doonce) then tb.doonce=false tb.active=true end
+	if(tb.doonce and tb.active) then
+		local count=0
+		tb.doonce=false
+		for i in all(bc.tbl) do count+=1 end
+		for i=1,count,1 do del(bc.tbl,bc.tbl[1]) end
+	end
 	if(tb.active) then
-		print("tetris!",50,50,8)
+		bigcirc_effect()
+		smallcirc_effect()
 		if(tb.cycles<=0) then
 			tb.active=false
 			tb.doonce=true
 			tb.cycles=tb.cyclesd
+			bc.dim=5
 		else tb.cycles-=1 end
 	end
 end
