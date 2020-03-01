@@ -100,6 +100,7 @@ bc.cycle=0
 bc.cycled=5
 bc.count=0
 bc.syzel=20
+bc.text={"single","double","triple","tetris"}
 
 start_y=-15
 -- start pos | row1 | row2
@@ -162,13 +163,14 @@ function _update60()
 		map(0,0,0,0,16,16)
 	end
 	tetris_banner()
+	--debug()
 end
 
-function bigcirc_effect()
+function bigcirc_effect(text)
 	circfill(64,64,bc.dim,0)
 	--line(0,64,128,64,7)
 	--line(64,0,64,128,7)
-	print("tETRIS!",52,62,8)
+	print(text,52,62,8)
 	circ(64,64,bc.dim,7)
 	bc.dim+=0.5
 end
@@ -211,7 +213,7 @@ function tetris_banner()
 		for i=1,count,1 do del(bc.tbl,bc.tbl[1]) end
 	end
 	if(tb.active) then
-		bigcirc_effect()
+		for i=1,4,1 do if(sc.stack==i) then bigcirc_effect(bc.text[i]) end end
 		smallcirc_effect()
 		if(tb.cycles<=0) then
 			tb.active=false
@@ -564,8 +566,6 @@ function rotate()
 end
 
 function init_tet()
-	d.a=p1.y
-
 	p1.r=0
 	p1.sel=next_tet("new") --rand
 	if(p1.sel==1) then table=tet_i p1.spr=18 end
