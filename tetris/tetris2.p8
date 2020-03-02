@@ -63,17 +63,6 @@ t.active=false
 t.cyclesd=10
 t.cycles=t.cyclesd
 
---Mapset / MapEffect
-m={}
-m.active=false
-m.cyclesd=10
-m.cycles=m.cyclesd
-m.lastspr=0
-m.lastx=0
-m.lasty=0
-m.lasttable={}
-m.lastr=0
-
 --WhiteOut
 w={}
 w.active=false
@@ -101,6 +90,17 @@ bc.cycled=5
 bc.count=0
 bc.syzel=20
 bc.text={"single","double","triple","tetris"}
+
+--Ground
+gr={}
+gr.active=false
+gr.cyclesd=5
+gr.cycles=gr.cyclesd
+gr.doonce=true
+
+--Tetris map-white
+tw={}
+tw.tbl={}
 
 start_y=-15
 -- start pos | row1 | row2
@@ -143,16 +143,14 @@ function _update60()
 
 		if(u.grav) then
 			gravity()
-			if(collision("gravity")) then t.active=true end
+			if(collision("gravity")) then tuck("start") end
 		end
-		tuck()
-		map_effect()
 	end
 
 	if(u.vcheck) then
 		if(void_check() or ti.active and gameover!=true) then
 			time_keeper("start")
-			tb.active=true
+			tetris_banner("start")
 			if(timer(0.7)) then clear_block() fx.state=false fx.doonce=true sc.stack=0 end
 			if(timer(0.8)) then time_keeper("end") drag_block() sfx(5) end
 		end
@@ -162,6 +160,8 @@ function _update60()
 		draw_tet()
 		map(0,0,0,0,16,16)
 	end
+	tuck()
+	ground()
 	tetris_banner()
 	--debug()
 end
@@ -205,22 +205,24 @@ function smallcirc_effect()
 	end
 end
 
-function tetris_banner()
-	if(tb.doonce and tb.active) then
-		local count=0
-		tb.doonce=false
-		for i in all(bc.tbl) do count+=1 end
-		for i=1,count,1 do del(bc.tbl,bc.tbl[1]) end
-	end
-	if(tb.active) then
-		for i=1,4,1 do if(sc.stack==i) then bigcirc_effect(bc.text[i]) end end
-		smallcirc_effect()
-		if(tb.cycles<=0) then
-			tb.active=false
-			tb.doonce=true
-			tb.cycles=tb.cyclesd
-			bc.dim=5
-		else tb.cycles-=1 end
+function tetris_banner(op)
+	if(op=="start") then tb.active=true else
+		if(tb.doonce and tb.active) then
+			local count=0
+			tb.doonce=false
+			for i in all(bc.tbl) do count+=1 end
+			for i=1,count,1 do del(bc.tbl,bc.tbl[1]) end
+		end
+		if(tb.active) then
+			for i=1,4,1 do if(sc.stack==i) then bigcirc_effect(bc.text[i]) end end
+			smallcirc_effect()
+			if(tb.cycles<=0) then
+				tb.active=false
+				tb.doonce=true
+				tb.cycles=tb.cyclesd
+				bc.dim=5
+			else tb.cycles-=1 end
+		end
 	end
 end
 
@@ -250,35 +252,6 @@ function white_out()
 			pos_y+=8
 			pos_x=24
 		end
-	end
-end
-
-function map_effect(op)
-	if(op=="start") then
-		m.active=true
-		m.lastx=p1.x
-		m.lasty=p1.y
-		m.lastspr=p1.spr
-		m.lasttable=table
-		m.lastr=p1.r
-		mapset(2,m.lastx,m.lasty,m.lasttable,m.lastr)
-
-		u.move=false
-		u.grav=false
-		u.vcheck=false
-	end
-
-	if(m.active) then
-		if(m.cycles<=0) then
-			sfx(0)
-			mapset(m.lastspr,m.lastx,m.lasty,m.lasttable,m.lastr)
-			m.cycles=m.cyclesd
-			m.active=false
-
-			u.move=true
-			u.grav=true
-			u.vcheck=true
-		else m.cycles-=1 end
 	end
 end
 
@@ -488,53 +461,84 @@ function next_tet(op)
 	spr((ne.next*2)+62,104,40,2,2)
 end
 
-function mapset(sprite,x,y,tab,lrot)
+function mapset()
 	local pos_x=0
 	local pos_y=0
 	local rot_x=0
  local rot_y=0
+	local tbl={} --Pos data for tet_white
 
- for i=1,tab[5],1 do
- 	rot_x,rot_y=rot(tab[3]+pos_x,tab[4]+pos_y,lrot)
-		mset((x+rot_x)/8,flr(((y+rot_y)/8)+0.5),sprite)
+ for i=1,table[5],1 do
+ 	rot_x,rot_y=rot(table[3]+pos_x,table[4]+pos_y)
+		mset((p1.x+rot_x)/8,flr(((p1.y+rot_y)/8)+0.5),p1.spr)
+		add(tbl,p1.x+rot_x)
+		add(tbl,flr(p1.y+rot_y+0.5))
  	pos_x+=8
  end
 
- if(tab[6]!=nil) then
+ if(table[6]!=nil) then
  	pos_x=0
  	pos_y=0
 
-		for n=1,tab[8],1 do
-			rot_x,rot_y=rot(tab[6]+pos_x,tab[7]+pos_y,lrot)
-			mset((x+rot_x)/8,flr(((y+rot_y)/8)+0.5),sprite)
+		for n=1,table[8],1 do
+			rot_x,rot_y=rot(table[6]+pos_x,table[7]+pos_y)
+			mset((p1.x+rot_x)/8,flr(((p1.y+rot_y)/8)+0.5),p1.spr)
+			add(tbl,p1.x+rot_x)
+			add(tbl,flr(p1.y+rot_y+0.5))
 			pos_x+=8
+		end
+	end
+	return tbl
+end
+
+function tet_white(op,tbl)
+	if(op=="savem") then tw.tbl=tbl end
+	for i=1,8,2 do
+		rectfill(tw.tbl[i],tw.tbl[i+1],tw.tbl[i]+7,tw.tbl[i+1]+7,7)
+	end
+end
+
+function ground(op)
+	if(op=="start") then gr.active=true else
+		if(gr.active) then
+			if(gr.doonce) then tet_white("savem",mapset()) gr.doonce=false end
+			tet_white()
+			if(gr.cycles<=0) then
+				u.move=true
+				u.grav=true
+				u.vcheck=true
+				u.rot=true
+				init_tet()
+				gr.doonce=true
+				gr.cycles=gr.cyclesd
+				gr.active=false
+			else gr.cycles-=1 end
 		end
 	end
 end
 
-function tuck()
-	if(t.active) then
-		p1.y=8*(flr((p1.y/8)+0.5))
-		p1.lasty=p1.y
-		u.grav=false
-		u.rot=false
-		p1.y+=8
-		if(collision("gravity")!=true) then
-			t.cycles=t.cyclesd
-			u.grav=true
-			u.rot=true
-			t.cycles=t.cyclesd+1
-			p1.y-=8
-			d.b=1
-			t.active=false
+function tuck(op)
+	if(op=="start") then t.active=true else
+		if(t.active) then
+			p1.y=8*(flr((p1.y/8)+0.5))
+			p1.lasty=p1.y
+			u.grav=false
+			u.rot=false
+			p1.y+=8
+			if(collision("gravity")!=true) then
+				t.cycles=t.cyclesd
+				u.grav=true
+				u.rot=true
+				t.cycles=t.cyclesd+1
+				p1.y-=8
+				t.active=false
+			end
+			if(t.cycles<=0) then
+				t.active=false
+				t.cycles=t.cyclesd
+				ground("start")
+			else t.cycles-=1 end
 		end
-		if(t.cycles<=0) then
-			map_effect("start")
-			t.active=false
-			t.cycles=t.cyclesd
-			u.rot=true
-			init_tet()
-		else t.cycles-=1 end
 	end
 end
 
@@ -666,21 +670,20 @@ function draw_tet()
  end
 end
 
-function rot(val_x,val_y,lrot)
-	if(lrot==nil) then lrot=p1.r end
- if(lrot==0) then
+function rot(val_x,val_y)
+ if(p1.r==0) then
  	return val_x,val_y
 	end
 
-	if(lrot==90) then
+	if(p1.r==90) then
 	 return (val_y)*-1,val_x
 	end
 
-	if(lrot==180) then
+	if(p1.r==180) then
 		return (val_x)*-1,(val_y)*-1
 	end
 
-	if(lrot==270) then
+	if(p1.r==270) then
 	 return val_y,(val_x)*-1
 	end
 end
