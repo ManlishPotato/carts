@@ -3,12 +3,13 @@ version 18
 __lua__
 s={}
 s.tbl={}
-s.cycled=5
+s.cycled=2
 s.cycle=s.cycled
+s.lim=1
 
 function _update60()
 	cls()
-	smoke(10,10,100,100,8)
+	smoke(10,10,100,100,10)
 end
 
 function smoke(x,y,x2,y2,d)
@@ -17,16 +18,29 @@ function smoke(x,y,x2,y2,d)
 		add(s.tbl,flr(rnd(x2-x)+x))
 		add(s.tbl,flr(rnd(y2-y)+y))
 		add(s.tbl,d)
+		add(s.tbl,7)
 		s.cycle=s.cycled
 	else s.cycle-=1 end
 	
 	local count=0
 	for i in all(s.tbl) do count+=1 end 
-	for i=1,count,3 do
+	for i=1,count,4 do
 		s.tbl[i+1]-=0.8
 		s.tbl[i+2]-=0.1
 		circ(s.tbl[i],s.tbl[i+1],s.tbl[i+2],8)
 	end
+	
+	count=0
+	for i in all(s.tbl) do count+=1 end
+	for i=1,count,4 do
+		if(s.tbl[i+2]<s.lim and s.tbl[i+2]<200) then
+			for n=0,2,1 do s.tbl[i+n]=200 end
+		end
+	end
+	
+	count=0
+	for i in all(s.tbl) do if(i==200) then count+=1 end end
+	for i=1,count,1 do del(s.tbl,200) end
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
