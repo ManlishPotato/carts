@@ -63,13 +63,18 @@ t.active=false
 t.cyclesd=10
 t.cycles=t.cyclesd
 
---WhiteOut
-w={}
-w.active=false
-
---Flow
+--Flow var
 f={}
 f.point=0
+f.active=false
+
+--Flowpress var
+fp={}
+fp.cycled=25
+fp.cycle=fp.cycled
+fp.count=0
+fp.active=false
+fp.fputton_p=0
 
 --Tetris Banner
 tb={}
@@ -94,7 +99,7 @@ bc.text={"single","double","triple","tetris"}
 --Ground
 gr={}
 gr.active=false
-gr.cyclesd=5
+gr.cyclesd=10
 gr.cycles=gr.cyclesd
 gr.doonce=true
 
@@ -144,6 +149,8 @@ function _update60()
 		end
 	end
 
+	flow()
+
 	if(u.vcheck) then
 		if(void_check() or ti.active and gameover!=true) then
 			time_keeper("start")
@@ -157,14 +164,13 @@ function _update60()
 		draw_tet()
 		map(0,0,0,0,16,16)
 	end
-	flow()
 	white_out()
 	flow_meter()
 
 	tuck()
 	ground()
 	tetris_banner()
-	--debug()
+	debug()
 end
 
 function bigcirc_effect(text)
@@ -230,21 +236,29 @@ end
 function flow_meter()
 	if(f.point>3) then f.point=3 end
 	for i=1,3,1 do if(f.point==i) then spr(126+(2*i),0,112,2,2) end end
-	if(f.point==0) then spr(134,0,112,2,2) w.active=false end
-
-	d.a=f.point
+	if(f.point==0) then spr(134,0,112,2,2) f.active=false end
 end
 
-function flow()
-	if(btnp(5)) then
-		if(w.active) then w.active=false
-		elseif(w.active==false and f.point>0) then w.active=true end
-	end
-	if(w.active) then return true end
+function flow(op)
+	if(op=="b_start") then fp.active=true return end
+	if(op=="b_end") then fp.active=false return end
+	if(fp.active) then m_press() end
+end
+
+function m_press()
+	d.b=1
+	if(btnp(5)) then fp.count+=1 end
+	if(fp.cycle<=0) then
+		d.a=fp.count
+		fp.count=0
+		fp.cycle=fp.cycled
+		d.b=0
+		fp.active=false
+	else fp.cycle-=1 end
 end
 
 function white_out()
-	if(w.active) then
+	if(f.active) then
 		local pos_x=24
 		local pos_y=0
 
