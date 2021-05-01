@@ -1,38 +1,36 @@
 pico-8 cartridge // http://www.pico-8.com
-version 18
+version 29
 __lua__
-a={1,6,24,4,30}
-
 function _init()
+	local tab={2,4,4,5,36}
+
 	cls()
 
-	print("before")
-	print_all()
-
-	print("---------------")
-
-	print("after")
-	remove()
-	print_all()
+	print("--regular--")
+	printall(tab)
+	print("--remove---")
+	rm(tab)
+	printall(tab)
+	print("--add------")
+	ad(tab)
+	printall(tab)
 end
 
-function remove()
-	local count=0
-	for i in all(a) do
-		count+=1
-		if(i>20) then del(a,i) end
-	end
+function ad(tab)
+	add(tab,2)
+	add(tab,3)
 end
 
-function print_all()
-	local count=0
-	for i in all(a) do
-		count+=1
-		print(i)
-	end
-	print("count:"..count)
+function rm(tab)
+	local co=0
+	for i in all(tab) do co+=1 end
+	for n=1,co,1 do tab[n]=nil end
 end
 
+function printall(tab)
+	for i in all(tab) do print(i) end
+	if(tab[1]==nil) then print("nothing") end
+end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
